@@ -1,0 +1,860 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>JS Ch40–60 Quiz (Interactive)</title>
+<style>
+  :root{--bg:#0f1724;--card:#0b1220;--accent:#60a5fa;--muted:#94a3b8;--ok:#16a34a;--bad:#ef4444}
+  body{font-family:Inter,ui-sans-serif,system-ui,Segoe UI,Roboto,"Helvetica Neue",Arial;background:linear-gradient(180deg,#071029 0%, #081226 100%);color:#e6eef8;margin:0; padding:28px; -webkit-font-smoothing:antialiased}
+  .app{max-width:1100px;margin:0 auto}
+  header{display:flex;gap:12px;align-items:center; margin-bottom:18px}
+  h1{font-size:20px;margin:0}
+  .controls{margin-left:auto;display:flex;gap:8px;align-items:center}
+  select,button{padding:8px 10px;border-radius:8px;border:1px solid rgba(255,255,255,0.06);background:#071127;color:#e6eef8}
+  .card{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));padding:18px;border-radius:12px;box-shadow:0 6px 30px rgba(2,6,23,0.6); margin-bottom:16px;border:1px solid rgba(255,255,255,0.03)}
+  .meta{color:var(--muted);font-size:13px;margin-bottom:12px}
+  .question{font-size:16px;margin:12px 0}
+  .choices{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .choice{padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);cursor:pointer;background:transparent}
+  .choice.correct{border-color:rgba(34,197,94,0.3);background:linear-gradient(90deg, rgba(34,197,94,0.06), transparent)}
+  .choice.wrong{border-color:rgba(239,68,68,0.2);background:linear-gradient(90deg, rgba(239,68,68,0.03), transparent)}
+  .actions{display:flex;gap:8px;margin-top:12px;align-items:center}
+  .hint{margin-top:10px;color:var(--muted);font-size:13px;background:rgba(255,255,255,0.01);padding:10px;border-radius:8px}
+  footer{display:flex;justify-content:space-between;align-items:center;color:var(--muted);font-size:13px;margin-top:12px}
+  .progress{height:10px;background:rgba(255,255,255,0.03);border-radius:999px;overflow:hidden;flex:1;margin-left:12px}
+  .progress > i{display:block;height:100%;background:linear-gradient(90deg,var(--accent),#7dd3fc);width:0%}
+  .small{font-size:13px;color:var(--muted)}
+  .explain{margin-top:10px;padding:10px;border-radius:8px;background:rgba(255,255,255,0.01);color:#cfe8ff}
+  .top-row{display:flex;gap:8px;align-items:center}
+  @media (max-width:720px){.choices{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div>
+      <h1>JS Quiz — Chapters 40 → 60</h1>
+      <div class="meta">Based on "A Smarter Way to Learn JavaScript" — Chapters 40–60. :contentReference[oaicite:1]{index=1}</div>
+    </div>
+
+    <div class="controls">
+      <label class="small">Chapter:
+        <select id="chapterSelect">
+          <option value="all">All Chapters (40–60)</option>
+        </select>
+      </label>
+      <label class="small">Mode:
+        <select id="modeSelect">
+          <option value="sequential">Sequential</option>
+          <option value="random">Random</option>
+        </select>
+      </label>
+      <button id="startBtn">Start / Reset</button>
+    </div>
+  </header>
+
+  <main>
+    <div class="card" id="quizCard" aria-live="polite">
+      <div class="top-row">
+        <div class="small" id="chapterLabel">Choose chapter & start quiz</div>
+        <div style="margin-left:auto" class="small">Remaining: <span id="remaining">0</span></div>
+      </div>
+
+      <div id="questionArea" style="display:none">
+        <div class="question" id="qText"></div>
+        <div class="choices" id="choices"></div>
+
+        <div class="actions">
+          <button id="submitBtn">Submit</button>
+          <button id="nextBtn" style="display:none">Next</button>
+          <button id="toggleHintBtn">Show hint</button>
+          <div style="margin-left:auto" class="small">Score: <strong id="score">0</strong> / <span id="answered">0</span></div>
+        </div>
+
+        <div id="hintBox" class="hint" style="display:none"></div>
+        <div id="explainBox" class="explain" style="display:none"></div>
+
+        <footer>
+          <div class="small" id="qIndex">0 / 0</div>
+          <div class="progress" title="progress"><i id="progInner"></i></div>
+        </footer>
+      </div>
+
+      <div id="landing" style="padding:18px 0">
+        <p class="small">This quiz set contains multiple-choice questions covering switch statements, loops, script placement, events, DOM methods, and more from Chapters 40→60. Start the quiz and use the "Show hint" button if you need a nudge. Explanations appear after you answer each question.</p>
+      </div>
+    </div>
+  </main>
+
+  <aside style="margin-top:10px" class="small card">
+    <strong>Notes</strong>
+    <ul>
+      <li>Questions & explanations are derived from the chapters listed in the PDF. :contentReference[oaicite:2]{index=2}</li>
+      <li>You can expand the dataset by editing the `questions` array in the script — each item includes chapter, difficulty, hint, and explanation.</li>
+    </ul>
+  </aside>
+</div>
+
+<script>
+/*
+  Data structure:
+  Each question:
+  { id, chapter: 40..60, q, choices: [A,B,C,D], answer: 0..3, hint, explain, difficulty: 'B'|'I'|'A' }
+*/
+const questions = [
+  /* CH40 - switch statements: how to complete them */
+  {id:'40-1', chapter:40, difficulty:'B',
+   q: 'In a switch statement, why do most case clauses end with a break statement?',
+   choices: [
+    'To exit the entire function immediately',
+    'To prevent fall-through and stop executing subsequent cases',
+    'To reset all variables used inside the switch',
+    'Because break is required after every statement in JS'],
+   answer:1,
+   hint: 'Think what happens after a matching case executes if you omit break.',
+   explain: 'Without break, execution continues into subsequent cases (fall-through). Using break stops the switch block after the matched case.'},
+
+  {id:'40-2', chapter:40, difficulty:'I',
+   q: 'Which clause acts like an else in an if...else chain inside a switch?',
+   choices: ['case else', 'fallback', 'default', 'catch'],
+   answer:2,
+   hint: 'It runs when no case matches.',
+   explain: 'default executes when no case matches; it is analogous to else in an if...else statement.'},
+
+  {id:'40-3', chapter:40, difficulty:'A',
+   q: `Given: switch(x) { case 1: a(); case 2: b(); default: c(); } 
+Which functions run if x === 1?`,
+   choices: ['a() only', 'a() then b() then c()', 'a() then b()', 'b() then c()'],
+   answer:1,
+   hint: 'There are no break statements here.',
+   explain: 'With no breaks, JavaScript falls through: a(), b(), and c() all run.'},
+
+  /* CH41 - while loops */
+  {id:'41-1', chapter:41, difficulty:'B',
+   q: 'Which of these is a key difference between for and while loops?',
+   choices: [
+    'for loops cannot use break',
+    'while loops check the condition before running the block',
+    'while loops always run at least once',
+    'for loops only iterate arrays'],
+   answer:1,
+   hint: 'Think about entry vs pre-test vs post-test.',
+   explain: 'While loops evaluate the condition before the first iteration; if it is false initially, the block never runs.'},
+
+  {id:'41-2', chapter:41, difficulty:'I',
+   q: 'Convert this for-loop to an equivalent while-loop:\nfor(var i=0;i<3;i++){doStuff();}',
+   choices: [
+    'var i=0; while(i<3){ doStuff(); i++; }',
+    'while(var i=0;i<3){doStuff();}',
+    'var i=0; do { doStuff(); i++; } while(i<3);',
+    'var i=0; while(i++<3) doStuff();'],
+   answer:0,
+   hint: 'Initialize before loop, update inside.',
+   explain: 'The while conversion sets i before the loop, checks i<3, runs body, increments i inside.'},
+
+  {id:'41-3', chapter:41, difficulty:'A',
+   q: 'What happens if you forget to increment a counter inside a while loop that depends on it?',
+   choices: ['Loop ends immediately', 'Infinite loop (unless broken)', 'Counter magically increments', 'The browser throws a syntax error'],
+   answer:1,
+   hint: 'If condition never changes and stays true...',
+   explain: 'If the condition remains true and there is no break, the loop runs forever (infinite loop), freezing execution.'},
+
+  /* CH42 - do...while loops */
+  {id:'42-1', chapter:42, difficulty:'B',
+   q: 'Which loop guarantees its body runs at least once?',
+   choices: ['for', 'while', 'do...while', 'none of them'],
+   answer:2,
+   hint: 'Post-test loop executes before checking condition.',
+   explain: 'do...while executes the block first, then evaluates the condition at the bottom.'},
+
+  {id:'42-2', chapter:42, difficulty:'I',
+   q: 'Which line completes a do...while so it runs while i <= 3?',
+   choices: ['} until (i <= 3);', '} while (i <= 3);', '} end (i <= 3);', '} when (i <= 3);'],
+   answer:1,
+   hint: 'Exact keyword spelled two words.',
+   explain: 'Syntax: do { ... } while (condition); — note the trailing semicolon.'},
+
+  {id:'42-3', chapter:42, difficulty:'A',
+   q: 'Given: var i = 0; do { i++; } while (i < 0); How many times does the loop body run?',
+   choices: ['0', '1', 'Infinite', '2'],
+   answer:1,
+   hint: 'Condition false but check is after the body.',
+   explain: 'do...while runs body once, then checks condition (false), so it stops after one iteration.'},
+
+  /* CH43 - Placing scripts */
+  {id:'43-1', chapter:43, difficulty:'B',
+   q: 'Placing a <script> tag at the end of <body> vs in <head> primarily affects:',
+   choices: [
+    'How many functions you can declare',
+    'When DOM elements are available to script',
+    'Whether JS is allowed',
+    'The language version used'],
+   answer:1,
+   hint: 'Think when the browser parses elements vs script.',
+   explain: 'Scripts at the end of body run after HTML is parsed, so DOM elements are available; scripts in head may run before DOM exists.'},
+
+  {id:'43-2', chapter:43, difficulty:'I',
+   q: 'What attribute lets an external script load without blocking HTML parsing?',
+   choices: ['async or defer', 'blocking', 'lazyload', 'deferOnly'],
+   answer:0,
+   hint: 'Two related attributes exist; one executes after download, one when ready.',
+   explain: 'async and defer change loading behavior: defer preserves order and runs after parsing; async runs when available (not guaranteed order).'},
+
+  {id:'43-3', chapter:43, difficulty:'A',
+   q: 'Why prefer external .js files over inline scripts for production?',
+   choices: ['Faster JS engine', 'Better caching and separation of concerns', 'JS won\'t run inline', 'They reduce file size always'],
+   answer:1,
+   hint: 'Think maintainability and browser caching.',
+   explain: 'External scripts are cacheable and improve maintainability by separating markup and behavior.'},
+
+  /* CH44 - Commenting */
+  {id:'44-1', chapter:44, difficulty:'B',
+   q: 'Which of the following is a single-line comment in JavaScript?',
+   choices: ['/* comment */', '<!-- comment -->', '// comment', '# comment'],
+   answer:2,
+   hint: 'Two forward slashes.',
+   explain: 'Single-line comments use //; block comments use /* ... */.'},
+
+  {id:'44-2', chapter:44, difficulty:'I',
+   q: 'Why write comments in code?',
+   choices: ['They make the code run faster', 'They explain intent and help others (and future you)', 'They are executed only in dev builds', 'They are required by browsers'],
+   answer:1,
+   hint: 'Think readability & maintainability.',
+   explain: 'Comments do not run; they explain code purpose, assumptions, and tricky parts.'},
+
+  {id:'44-3', chapter:44, difficulty:'A',
+   q: 'Which comment type can span multiple lines?',
+   choices: ['// only', '/* ... */', '<!-- -->', '// ... //'],
+   answer:1,
+   hint: 'Classic C-style block comment.',
+   explain: '/* ... */ spans multiple lines and is used for longer notes.'},
+
+  /* CH45 - Events: link */
+  {id:'45-1', chapter:45, difficulty:'B',
+   q: 'Which event fires when a link is clicked (and before navigation)?',
+   choices: ['onhover', 'onsubmit', 'onclick / click', 'onchange'],
+   answer:2,
+   hint: 'This is the basic DOM mouse event for clicking.',
+   explain: 'The click event fires when a user activates a link; scripts can prevent navigation by calling event.preventDefault().'},
+
+  {id:'45-2', chapter:45, difficulty:'I',
+   q: 'How do you prevent a link from navigating to its href in a click handler?',
+   choices: [
+    'return false from handler or event.preventDefault()',
+    'set link.disabled = true',
+    'change href to "#" only',
+    'you cannot prevent navigation'],
+   answer:0,
+   hint: 'There is a standard DOM method to stop default actions.',
+   explain: 'Calling event.preventDefault() (or return false in certain handlers) prevents default navigation.'},
+
+  {id:'45-3', chapter:45, difficulty:'A',
+   q: 'Which is better: inline onclick="..." or element.addEventListener("click", fn)?',
+   choices: [
+    'Inline is better for separation of concerns',
+    'addEventListener is preferable for multiple handlers & separation',
+    'Both are identical in behavior and style',
+    'Inline never works'],
+   answer:1,
+   hint: 'Consider maintainability and multiple listeners.',
+   explain: 'addEventListener keeps JS out of HTML and supports multiple handlers and modern patterns.'},
+
+  /* CH46 - Events: button */
+  {id:'46-1', chapter:46, difficulty:'B',
+   q: 'Which event is commonly used to respond to a button press?',
+   choices: ['onscroll', 'onclick', 'oninput', 'onhover'],
+   answer:1,
+   hint: 'Same as links for clicks.',
+   explain: 'Buttons respond to click events; use addEventListener("click", fn) in script.'},
+
+  {id:'46-2', chapter:46, difficulty:'I',
+   q: 'When adding a click handler in JS: document.getElementById("b1").onclick = sayHello; What must sayHello be?',
+   choices: ['A string', 'A function reference (no parentheses)', 'A number', 'Null'],
+   answer:1,
+   hint: 'Should not immediately invoke the function when assigning.',
+   explain: 'Assign the function itself (reference) without parentheses so it runs when clicked.'},
+
+  {id:'46-3', chapter:46, difficulty:'A',
+   q: 'Which property sets a button to be disabled?',
+   choices: ['disabled = true', 'enabled = false', 'setDisabled()', 'readonly = true'],
+   answer:0,
+   hint: 'Standard DOM boolean attribute.',
+   explain: 'element.disabled = true disables a button; the attribute also appears in HTML as disabled.'},
+
+  /* CH47 - Events: mouse */
+  {id:'47-1', chapter:47, difficulty:'B',
+   q: 'Which event triggers when the mouse pointer moves over an element?',
+   choices: ['mousemove', 'mouseover / mouseenter', 'mousedrag', 'mousehold'],
+   answer:1,
+   hint: 'Two related events exist for entering vs moving.',
+   explain: 'mouseover fires when entering an element; mousemove fires continuously as it moves; mouseenter doesn\'t bubble.'},
+
+  {id:'47-2', chapter:47, difficulty:'I',
+   q: 'Which event should you use for swapping an image when the user mouses over it?',
+   choices: ['onload', 'onmouseover', 'onscroll', 'onchange'],
+   answer:1,
+   hint: 'Basic hover behavior.',
+   explain: 'onmouseover or addEventListener("mouseover", fn) is used to change images when the pointer is over an element.'},
+
+  {id:'47-3', chapter:47, difficulty:'A',
+   q: 'What is important to remember about mouse events on touch devices?',
+   choices: ['They behave identically', 'They may not fire; use touch events or pointer events', 'Touch devices convert clicks to hover', 'Mouse events are faster'],
+   answer:1,
+   hint: 'Mobile/touch needs special handling.',
+   explain: 'Touch devices may not fire mouseover/mousemove the same way; use touch or pointer events for better compatibility.'},
+
+  /* CH48 - Events: fields */
+  {id:'48-1', chapter:48, difficulty:'B',
+   q: 'Which event fires when an input field loses focus?',
+   choices: ['onblur', 'onchange', 'onfocus', 'oninput'],
+   answer:0,
+   hint: 'Opposite of focus.',
+   explain: 'blur fires when element loses focus; change fires when value finishes changing and element loses focus.'},
+
+  {id:'48-2', chapter:48, difficulty:'I',
+   q: 'Which two events are useful for live validation as the user types?',
+   choices: ['onkeyup and onkeypress', 'oninput and onkeyup', 'onload and onclick', 'onblur and onfocus'],
+   answer:1,
+   hint: 'One updates as text changes.',
+   explain: 'oninput fires with every change; onkeyup can detect key interactions — both useful for validation.'},
+
+  {id:'48-3', chapter:48, difficulty:'A',
+   q: 'What value does a text field have if the user clicks Cancel on a prompt?',
+   choices: ['undefined', 'null', 'empty string', 'false'],
+   answer:1,
+   hint: 'Remember chapter on prompt behavior.',
+   explain: 'prompt returns null when Cancel is clicked; empty string when OK with no text.'},
+
+  /* CH49 - Reading field values */
+  {id:'49-1', chapter:49, difficulty:'B',
+   q: 'How do you read the value of an <input id="email"> element?',
+   choices: ['document.getElementById("email").value', 'document.value("email")', 'getValue("email")', 'document.getElementsByName("email")[0].text'],
+   answer:0,
+   hint: 'Standard DOM property.',
+   explain: 'Use .value on the input element returned by getElementById.'},
+
+  {id:'49-2', chapter:49, difficulty:'I',
+   q: 'For a select (dropdown), how do you get the selected option text?',
+   choices: [
+    'select.value only',
+    'select.options[select.selectedIndex].text',
+    'select.selectedText',
+    'document.selectedOptionText(select)'],
+   answer:1,
+   hint: 'Use the options collection and selectedIndex.',
+   explain: 'Use select.options[select.selectedIndex].text to get the displayed text of the selected option.'},
+
+  {id:'49-3', chapter:49, difficulty:'A',
+   q: 'Why cast prompt results to number when expecting numeric input?',
+   choices: [
+    'prompt already returns numbers', 
+    'prompt returns strings so numeric math would do concatenation', 
+    'casting slows code', 
+    'you cannot cast prompts'],
+   answer:1,
+   hint: 'Remember concatenation vs addition.',
+   explain: 'prompt returns strings; adding a number to that string concatenates unless you parse it to a number.'},
+
+  /* CH50 - Setting field values */
+  {id:'50-1', chapter:50, difficulty:'B',
+   q: 'How do you set the value of an input field with id="name"?',
+   choices: [
+    'document.getElementById("name").value = "Saad";',
+    'document.setValue("name","Saad");',
+    'document.getElementById("name").innerHTML = "Saad";',
+    'setValue("name","Saad");'],
+   answer:0,
+   hint: '.value is the field property.',
+   explain: 'Set the .value property on the input element to change its current value.'},
+
+  {id:'50-2', chapter:50, difficulty:'I',
+   q: 'Which method sets a checkbox checked state?',
+   choices: [
+    'checkbox.checked = true', 
+    'checkbox.value = true', 
+    'checkbox.setChecked()', 
+    'checkbox.toggle(true)'],
+   answer:0,
+   hint: 'A boolean DOM property exists.',
+   explain: 'Use the boolean property .checked to set or read checkbox state.'},
+
+  {id:'50-3', chapter:50, difficulty:'A',
+   q: 'If you want to fill a field and trigger change handlers, what should you do after setting .value programmatically?',
+   choices: [
+    'call element.dispatchEvent(new Event("change"))',
+    'call element.triggerChange()',
+    'call document.refresh()',
+    'do nothing; handlers always run'],
+   answer:0,
+   hint: 'Setting .value doesn\'t always fire events.',
+   explain: 'Programmatically setting .value does not automatically trigger change/input events — dispatch them if you need handlers to run.'},
+
+  /* CH51 - Reading and setting paragraph text */
+  {id:'51-1', chapter:51, difficulty:'B',
+   q: 'How do you get the HTML content of the third <p> in a collection p?',
+   choices: ['p[2].innerHTML', 'p[3].innerHTML', 'p.innerHTML(2)', 'p.get(2).html'],
+   answer:0,
+   hint: 'Zero-based indexing.',
+   explain: 'p[2] is the third element (0-based); innerHTML returns its HTML content.'},
+
+  {id:'51-2', chapter:51, difficulty:'I',
+   q: 'What property sets only the text content (not HTML) of an element?',
+   choices: ['innerText / textContent', 'innerHTML', 'outerHTML', 'value'],
+   answer:0,
+   hint: 'There are two similar properties; either is for text.',
+   explain: 'textContent (or innerText) sets text only; innerHTML can include tags.'},
+
+  {id:'51-3', chapter:51, difficulty:'A',
+   q: 'Which is safer to avoid XSS when inserting user text into a paragraph?',
+   choices: ['Use innerHTML with sanitized markup', 'Use textContent (or innerText)', 'Use outerHTML', 'Use eval()'],
+   answer:1,
+   hint: 'Avoid interpreting user-provided markup.',
+   explain: 'textContent inserts literal text and does not parse HTML, preventing script injection.'},
+
+  /* CH52 - Manipulating images and text */
+  {id:'52-1', chapter:52, difficulty:'B',
+   q: 'To change an <img id="i1"> source, use:',
+   choices: ['document.getElementById("i1").src = "new.jpg"', '.setSource()', '.changeSrc()', 'img.src("new.jpg")'],
+   answer:0,
+   hint: 'Standard DOM property for image source.',
+   explain: '.src sets the image URL for an <img> element.'},
+
+  {id:'52-2', chapter:52, difficulty:'I',
+   q: 'What is a good approach to swap two images on hover for performance?',
+   choices: [
+    'preload the swapping images and change src on hover',
+    'change the image dimensions instead',
+    'use eval() to set new images',
+    'replace <img> nodes entirely each time'],
+   answer:0,
+   hint: 'Avoid network delay on first hover.',
+   explain: 'Preloading ensures images are available immediately when swapping src on hover.'},
+
+  {id:'52-3', chapter:52, difficulty:'A',
+   q: 'Changing an element\'s innerHTML that contains images may cause what?',
+   choices: ['Images to remain same', 'Existing image elements to be recreated (losing JS state)', 'Faster rendering always', 'No change in DOM'],
+   answer:1,
+   hint: 'Replacing HTML yields new nodes.',
+   explain: 'innerHTML replacement recreates DOM nodes; handlers or state on previous nodes are lost.'},
+
+  /* CH53 - Swapping images */
+  {id:'53-1', chapter:53, difficulty:'B',
+   q: 'Which event pair is commonly used to swap an image when the pointer enters/leaves an image?',
+   choices: ['mouseover / mouseout', 'mousedown / mouseup', 'onload / onunload', 'mouseenter / leave'],
+   answer:0,
+   hint: 'There are enter/leave event names.',
+   explain: 'mouseover/mouseout are commonly used; mouseenter/mouseleave differ in bubbling behavior.'},
+
+  {id:'53-2', chapter:53, difficulty:'I',
+   q: 'document.getElementById("i12").onmouseover = swapPic; — what must swapPic do?',
+   choices: [
+    'change source: document.getElementById("i12").src = "x.jpg"',
+    'return true',
+    'call alert() only',
+    'create a new image tag and append it'],
+   answer:0,
+   hint: 'Swapping image simply changes src.',
+   explain: 'swapPic should change the element\'s src (or class) to show the alternative picture.'},
+
+  {id:'53-3', chapter:53, difficulty:'A',
+   q: 'What is a benefit of changing classes instead of src for swapping visuals?',
+   choices: [
+    'Allows CSS transitions and toggles multiple style changes', 
+    'Classes are only for text', 
+    'Class changes break images', 
+    'None — src is always better'],
+   answer:0,
+   hint: 'CSS + classes = flexible styling.',
+   explain: 'Using classes lets you use CSS background-image, transitions, and maintain separation between style and behavior.'},
+
+  /* CH54 - Swapping images and setting classes */
+  {id:'54-1', chapter:54, difficulty:'B',
+   q: 'Which method adds a class to an element without overwriting its existing classes?',
+   choices: ['el.className = "new"', 'el.setClass("new")', 'el.classList.add("new")', 'addClass(el,"new")'],
+   answer:2,
+   hint: 'Modern DOM API provides classList helpers.',
+   explain: 'classList.add preserves existing classes and adds the new one.'},
+
+  {id:'54-2', chapter:54, difficulty:'I',
+   q: 'Which property returns a live DOMTokenList of classes?',
+   choices: ['element.classes', 'element.classList', 'element.classNames', 'element.getClassList()'],
+   answer:1,
+   hint: 'Used to add/remove/toggle classes.',
+   explain: 'element.classList is a DOMTokenList with .add(), .remove(), .toggle() methods.'},
+
+  {id:'54-3', chapter:54, difficulty:'A',
+   q: 'Why use class toggling for image state instead of changing src directly?',
+   choices: [
+    'It keeps logic and styling separated and enables CSS effects', 
+    'It prevents images from loading', 
+    'It is required by browsers', 
+    'It is slower'],
+   answer:0,
+   hint: 'Separation of concerns principle.',
+   explain: 'Toggling classes allows CSS to control presentation (images/backgrounds/transitions) and keeps JS focused on behavior.'},
+
+  /* CH55 - Setting styles */
+  {id:'55-1', chapter:55, difficulty:'B',
+   q: 'Which is the JS property to change inline style of an element?',
+   choices: ['element.style.backgroundColor = "red"', 'element.css("background-color","red")', 'element.setStyle("background","red")', 'element.style("backgroundColor","red")'],
+   answer:0,
+   hint: 'JS uses camelCase for CSS properties.',
+   explain: 'Style properties use camelCase in JS: element.style.backgroundColor = "red".'},
+
+  {id:'55-2', chapter:55, difficulty:'I',
+   q: 'What is the drawback of modifying many inline styles directly from JS?',
+   choices: [
+    'It is impossible', 
+    'It can be harder to maintain vs toggling classes and using CSS', 
+    'Inline styles always win and are preferred', 
+    'They are ignored by browsers'],
+   answer:1,
+   hint: 'Think maintainability and CSS cascade.',
+   explain: 'Using classes and CSS is better for organization; inline styles can make code messy and override cascading rules.'},
+
+  {id:'55-3', chapter:55, difficulty:'A',
+   q: 'How would you set multiple styles safely (preserving other styles)?',
+   choices: [
+    'element.style.cssText += "font-weight:bold;"', 
+    'element.style = "..."', 
+    'element.setAttribute("style","...")', 
+    'Replace the element entirely'],
+   answer:0,
+   hint: 'You can append to cssText or prefer toggling classes.',
+   explain: 'Appending to cssText adds declarations, but toggling classes is better for maintainability.'},
+
+  /* CH56 - Target all elements by tag name */
+  {id:'56-1', chapter:56, difficulty:'B',
+   q: 'What does document.getElementsByTagName("p") return?',
+   choices: [
+    'An array of <p> nodes', 
+    'A live HTMLCollection of <p> elements', 
+    'A NodeList snapshot', 
+    'Always null'],
+   answer:1,
+   hint: 'It updates if DOM changes.',
+   explain: 'getElementsByTagName returns a live HTMLCollection that reflects DOM changes.'},
+
+  {id:'56-2', chapter:56, difficulty:'I',
+   q: 'How do you access the second paragraph from that collection?',
+   choices: ['p[1]', 'p[2]', 'p.get(1)', 'p.second'],
+   answer:0,
+   hint: 'Zero-based index.',
+   explain: 'Use bracket indexing with 0-based index: p[1] is the second element.'},
+
+  {id:'56-3', chapter:56, difficulty:'A',
+   q: 'If you need a static snapshot instead of a live collection, which method works?',
+   choices: ['Array.from(document.getElementsByTagName("p"))', 'document.getElementsByTagName("p").snapshot()', 'document.getElementsByTagName("p").static()', 'You cannot copy'],
+   answer:0,
+   hint: 'Convert to array.',
+   explain: 'Array.from(...) or spread (...) converts the live collection into a static array snapshot.'},
+
+  /* CH57 - Target some elements by tag name */
+  {id:'57-1', chapter:57, difficulty:'B',
+   q: 'Which method narrows tag selection to within a parent element?',
+   choices: [
+    'document.querySelectorAll with :scope', 
+    'parent.getElementsByTagName("p")', 
+    'document.getElementsByTagName("p") always', 
+    'You cannot narrow selection'],
+   answer:1,
+   hint: 'Call method on the parent node.',
+   explain: 'Calling parentElement.getElementsByTagName("p") returns only <p> elements that are descendants of that parent.'},
+
+  {id:'57-2', chapter:57, difficulty:'I',
+   q: 'Which modern query allows complex CSS selectors for scoped search?',
+   choices: ['getElementByClassName', 'querySelector / querySelectorAll', 'getScopedElements', 'scopedQuery'],
+   answer:1,
+   hint: 'CSS selector power.',
+   explain: 'querySelector / querySelectorAll accept CSS selectors and can be called on any element for scoped queries.'},
+
+  {id:'57-3', chapter:57, difficulty:'A',
+   q: 'Which is true about getElementsByTagName vs querySelectorAll?',
+   choices: [
+    'getElementsByTagName returns NodeList snapshot', 
+    'querySelectorAll returns static NodeList (not live) while getElementsByTagName returns live HTMLCollection', 
+    'Both always return arrays', 
+    'querySelectorAll is slower and always wrong'],
+   answer:1,
+   hint: 'Remember live vs static.',
+   explain: 'querySelectorAll returns a static NodeList snapshot; getElementsByTagName returns a live HTMLCollection.'},
+
+  /* CH58 - The DOM */
+  {id:'58-1', chapter:58, difficulty:'B',
+   q: 'Which node is at the top of the DOM hierarchy for a webpage?',
+   choices: ['<html>', '<body>', 'document', '<head>'],
+   answer:2,
+   hint: 'The API root object.',
+   explain: 'document is the top-level object representing the DOM; html is document.documentElement.'},
+
+  {id:'58-2', chapter:58, difficulty:'I',
+   q: 'What are the three basic node types commonly seen in the DOM?',
+   choices: ['document, style, script', 'element, text, document', 'object, array, string', 'node, token, tree'],
+   answer:1,
+   hint: 'Think elements (tags), text nodes, and the document itself.',
+   explain: 'Common node types: document (root), element nodes (<div>, <p>), and text nodes (text content).'},
+
+  {id:'58-3', chapter:58, difficulty:'A',
+   q: 'Which API method creates a new element node (not yet in DOM)?',
+   choices: ['document.createElement("div")', 'document.newElement("div")', 'document.insert("div")', 'create("div")'],
+   answer:0,
+   hint: 'Factory method on document.',
+   explain: 'Use document.createElement to create an element node that you can later append.'},
+
+  /* CH59 - The DOM: Parents and children */
+  {id:'59-1', chapter:59, difficulty:'B',
+   q: 'If div contains two <p> elements, those <p> nodes are called what relative to div?',
+   choices: ['parents', 'children', 'siblings', 'ancestors'],
+   answer:1,
+   hint: 'Immediate nested nodes.',
+   explain: 'Nodes directly enclosed by a parent are its children; elements that share the same parent are siblings.'},
+
+  {id:'59-2', chapter:59, difficulty:'I',
+   q: 'In the DOM, what is the parent of <body>?',
+   choices: ['<div>', '<html>', 'document', '<head>'],
+   answer:1,
+   hint: 'Top-level html tag.',
+   explain: '<html> is the parent of <head> and <body> (document is above html).'},
+
+  {id:'59-3', chapter:59, difficulty:'A',
+   q: 'Which term describes nodes with the same parent?',
+   choices: ['siblings', 'cousins', 'neighbors', 'peers'],
+   answer:0,
+   hint: 'Common family metaphor.',
+   explain: 'Nodes sharing the same parent are siblings.'},
+
+  /* CH60 - The DOM: Finding children */
+  {id:'60-1', chapter:60, difficulty:'B',
+   q: 'Which property returns the number of child nodes of an element?',
+   choices: ['childrenCount', 'childNodes.length', 'childCount', 'node.children.lengthOnly'],
+   answer:1,
+   hint: 'Use length on the collection.',
+   explain: 'childNodes is a NodeList/collection; use .length to get how many child nodes exist.'},
+
+  {id:'60-2', chapter:60, difficulty:'I',
+   q: 'Which property references the first child node of an element?',
+   choices: ['firstChild', 'childNodes[0]', 'both of the above', 'firstElementOnly'],
+   answer:2,
+   hint: 'There is a named property and equivalent indexing.',
+   explain: 'firstChild is the same as childNodes[0]; note firstElementChild excludes text nodes (useful to skip whitespace).'},
+
+  {id:'60-3', chapter:60, difficulty:'A',
+   q: 'Some browsers treat whitespace between elements as text nodes. What is a recommended approach when counting element children?',
+   choices: [
+    'Use nodeType checks to skip text nodes or use children/firstElementChild/lastElementChild', 
+    'Remove all whitespace from HTML', 
+    'Assume there are no text nodes', 
+    'Use innerText to count elements'],
+   answer:0,
+   hint: 'The book covers junk artifacts and nodeType.',
+   explain: 'Count only nodes with nodeType === 1 (element) or use element.children / firstElementChild / lastElementChild to ignore text nodes.'}
+];
+
+// Build chapter select options (40..60)
+const chapterSelect = document.getElementById('chapterSelect');
+for(let c=40;c<=60;c++){
+  const opt=document.createElement('option');
+  opt.value=c;
+  opt.textContent=`Chapter ${c}`;
+  chapterSelect.appendChild(opt);
+}
+
+let state = {
+  pool: [],
+  index: 0,
+  mode: 'sequential',
+  score: 0,
+  answered: 0
+};
+
+const elems = {
+  startBtn: document.getElementById('startBtn'),
+  modeSelect: document.getElementById('modeSelect'),
+  chapterSelect,
+  quizCard: document.getElementById('quizCard'),
+  landing: document.getElementById('landing'),
+  questionArea: document.getElementById('questionArea'),
+  qText: document.getElementById('qText'),
+  choices: document.getElementById('choices'),
+  submitBtn: document.getElementById('submitBtn'),
+  nextBtn: document.getElementById('nextBtn'),
+  toggleHintBtn: document.getElementById('toggleHintBtn'),
+  hintBox: document.getElementById('hintBox'),
+  explainBox: document.getElementById('explainBox'),
+  chapterLabel: document.getElementById('chapterLabel'),
+  remaining: document.getElementById('remaining'),
+  qIndex: document.getElementById('qIndex'),
+  score: document.getElementById('score'),
+  answered: document.getElementById('answered'),
+  progInner: document.getElementById('progInner'),
+};
+
+function buildPool(selectedChapter){
+  let pool;
+  if(selectedChapter === 'all'){
+    pool = [...questions];
+  } else {
+    const ch = Number(selectedChapter);
+    pool = questions.filter(q => q.chapter === ch);
+  }
+  // Mode selection
+  if(state.mode === 'random'){
+    pool = shuffle(pool);
+  }
+  return pool;
+}
+
+function shuffle(arr){
+  const a = [...arr];
+  for(let i=a.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [a[i],a[j]]=[a[j],a[i]];
+  }
+  return a;
+}
+
+function startQuiz(){
+  state.mode = elems.modeSelect.value;
+  const ch = elems.chapterSelect.value;
+  state.pool = buildPool(ch);
+  state.index = 0;
+  state.score = 0;
+  state.answered = 0;
+  elems.score.textContent = '0';
+  elems.answered.textContent = '0';
+  elems.chapterLabel.textContent = ch === 'all' ? 'All Chapters (40–60)' : `Chapter ${ch}`;
+  elems.remaining.textContent = state.pool.length;
+  elems.landing.style.display = 'none';
+  elems.questionArea.style.display = state.pool.length ? 'block' : 'none';
+  elems.qIndex.textContent = state.pool.length ? `1 / ${state.pool.length}` : '0 / 0';
+  elems.progInner.style.width = '0%';
+  elems.hintBox.style.display = 'none';
+  elems.explainBox.style.display = 'none';
+  renderQuestion();
+}
+
+// render current question
+function renderQuestion(){
+  if(state.index >= state.pool.length){
+    showResults();
+    return;
+  }
+  const q = state.pool[state.index];
+  elems.qText.textContent = `[Ch ${q.chapter}] ${q.q}`;
+  elems.choices.innerHTML = '';
+  q.choices.forEach((c,i)=>{
+    const btn = document.createElement('button');
+    btn.className='choice';
+    btn.type='button';
+    btn.dataset.index = i;
+    btn.innerHTML = `<strong>${'ABCD'[i]}</strong>. ${c}`;
+    btn.addEventListener('click', () => selectChoice(btn));
+    elems.choices.appendChild(btn);
+  });
+  elems.hintBox.textContent = q.hint || '';
+  elems.hintBox.style.display = 'none';
+  elems.toggleHintBtn.textContent = 'Show hint';
+  elems.explainBox.style.display = 'none';
+  elems.submitBtn.disabled = false;
+  elems.nextBtn.style.display = 'none';
+  updateProgress();
+}
+
+let selectedChoice = null;
+function selectChoice(btn){
+  // only one selected
+  [...elems.choices.children].forEach(ch=>ch.classList.remove('selected'));
+  btn.classList.add('selected');
+  selectedChoice = Number(btn.dataset.index);
+}
+
+elems.submitBtn.addEventListener('click', ()=>{
+  if(selectedChoice === null){
+    alert('Select an answer first (click a choice).');
+    return;
+  }
+  checkAnswer();
+});
+
+function checkAnswer(){
+  const q = state.pool[state.index];
+  const correct = q.answer;
+  // mark choices
+  [...elems.choices.children].forEach(ch=>{
+    const idx = Number(ch.dataset.index);
+    ch.classList.remove('selected');
+    if(idx === correct) ch.classList.add('correct');
+    if(idx === selectedChoice && idx !== correct) ch.classList.add('wrong');
+    ch.disabled = true;
+  });
+  // update score
+  state.answered++;
+  elems.answered.textContent = state.answered;
+  if(selectedChoice === correct){
+    state.score++;
+    elems.score.textContent = state.score;
+  }
+  // show explanation
+  elems.explainBox.style.display = 'block';
+  elems.explainBox.textContent = `Explanation: ${q.explain}`;
+  elems.submitBtn.disabled = true;
+  elems.nextBtn.style.display = 'inline-block';
+  elems.remaining.textContent = Math.max(0, state.pool.length - (state.index+1));
+}
+
+elems.nextBtn.addEventListener('click', ()=>{
+  // advance
+  state.index++;
+  selectedChoice = null;
+  if(state.index < state.pool.length){
+    elems.qIndex.textContent = `${state.index+1} / ${state.pool.length}`;
+    renderQuestion();
+  } else {
+    showResults();
+  }
+});
+
+elems.toggleHintBtn.addEventListener('click', ()=>{
+  if(elems.hintBox.style.display === 'none'){
+    elems.hintBox.style.display = 'block';
+    elems.toggleHintBtn.textContent = 'Hide hint';
+  } else {
+    elems.hintBox.style.display = 'none';
+    elems.toggleHintBtn.textContent = 'Show hint';
+  }
+});
+
+elems.startBtn.addEventListener('click', startQuiz);
+
+// seed index/progress update
+function updateProgress(){
+  const total = state.pool.length || 1;
+  const pos = Math.min(state.index, total-1);
+  const pct = Math.round((pos / total) * 100);
+  elems.progInner.style.width = `${pct}%`;
+  elems.qIndex.textContent = `${state.index+1} / ${total}`;
+  elems.remaining.textContent = Math.max(0, total - (state.index+1));
+}
+
+// final results
+function showResults(){
+  elems.questionArea.style.display = 'none';
+  elems.landing.style.display = 'block';
+  elems.landing.innerHTML = `
+    <h3>Quiz complete</h3>
+    <p class="small">You answered ${state.answered} questions. Score: ${state.score}.</p>
+    <p class="small">To retry: choose chapter and click Start / Reset.</p>
+  `;
+  elems.progInner.style.width = '100%';
+}
+
+// initialize UI text
+document.addEventListener('DOMContentLoaded', ()=>{
+  elems.chapterLabel.textContent = 'Ready — choose chapter';
+  elems.remaining.textContent = '0';
+  elems.qIndex.textContent = '0 / 0';
+});
+</script>
+</body>
+</html>
