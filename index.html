@@ -217,8 +217,9 @@
         }
 
         body[data-theme="dark"] .card {
-            background: linear-gradient(180deg, rgba(255, 255, 255, 0.02), rgba(255, 255, 255, 0.01));
-            border-color: rgba(255, 255, 255, 0.03);
+            /* background: linear-gradient(180deg, rgba(255, 255, 255, 0.02), rgba(255, 255, 255, 0.01)); */
+            background: rgba(255, 255, 255, 0.089);
+            border-color: rgba(255, 255, 255, 0.092);
         }
 
         body[data-theme="dark"] .meta {
@@ -249,7 +250,7 @@
         }
 
         body[data-theme="light"] {
-            background: linear-gradient(135deg, #0f2847 0%, #1e3a5f 50%, #2d4a6f 100%);
+            background: linear-gradient(135deg, #2264b4 0%, #2d578f 50%, #4770a5 100%);
             color: #e8f2ff;
         }
 
@@ -261,7 +262,7 @@
         }
 
         body[data-theme="light"] .meta {
-            color: #4a6fa5;
+            color: #a8cafc;
         }
 
         body[data-theme="light"] .hint {
@@ -431,14 +432,14 @@
             { id: '43-2', chapter: 43, q: 'Which attributes let an external script load without blocking parsing?', choices: ['async or defer', 'blocking', 'lazyload', 'deferOnly'], answer: 0, hint: 'Two related attributes exist.', explain: 'async and defer change loading: defer preserves order and runs after parsing; async runs when ready (order not guaranteed).' },
             { id: '43-3', chapter: 43, q: 'What is the file extension for external JavaScript files?', choices: ['.javascript', '.js', '.script', '.jscript'], answer: 1, hint: 'Two letter abbreviation.', explain: 'JavaScript files use the .js extension.' },
             { id: '43-4', chapter: 43, q: 'Do external JavaScript files need script tags inside them?', choices: ['Yes, always', 'No, they contain pure JS', 'Only at the top', 'Only for functions'], answer: 1, hint: 'They are pure code files.', explain: 'External .js files contain only JavaScript code without script tags.' },
-            { id: '43-5', chapter: 43, q: 'How do you link an external JavaScript file named "main.js"?', choices: ['<script link="main.js">', '<script src="main.js"><script>', '<javascript src="main.js">', '<include file="main.js">'], answer: 1, hint: 'Similar to linking CSS but different tag.', explain: 'Use <script src="filename.js"><script> to include external JavaScript.' },
+            { id: '43-5', chapter: 43, q: 'How do you link an external JavaScript file named "main.js"?', choices: [`<script link="main.js">`, `<script src="main.js"><script>`, `<javascript src="main.js">`, `<include file="main.js">`], answer: 1, hint: 'Similar to linking CSS but different tag.', explain: 'Use <script src="filename.js"><script> to include external JavaScript.' },
             { id: '43-6', chapter: 43, q: 'Can you have both embedded and external JavaScript in the same HTML file?', choices: ['No, choose one only', 'Yes, you can have both', 'Only with special browsers', 'Only in the head section'], answer: 1, hint: 'No restriction exists.', explain: 'You can include both external JavaScript files and embedded code in the same HTML file.' },
             { id: '43-7', chapter: 43, q: 'Why is it generally better to place scripts at the end of the body section?', choices: ['It makes code run faster', 'CSS and images load without delay', 'It is required by HTML5', 'Functions work better there'], answer: 1, hint: 'Think about page rendering.', explain: 'Scripts at the end allow CSS styling and images to load first, improving perceived performance.' },
             { id: '43-8', chapter: 43, q: 'Where are all JavaScript functions loaded in memory?', choices: ['Only in the head section', 'Only where they are defined', 'Throughout memory when page loads', 'They are never loaded'], answer: 2, hint: 'Location does not matter for functions.', explain: 'All JavaScript code is loaded into memory when the page loads, regardless of where it appears in the HTML.' },
 
             // Chapter 44 - Commenting (7 questions)
-            { id: '44-1', chapter: 44, q: 'Which of the following is a single-line comment in JavaScript?', choices: ['/* comment */', '<!-- comment -->', '// comment', '# comment'], answer: 2, hint: 'Two forward slashes.', explain: 'Single-line comments use //; block comments use /* ... */.' },
-            { id: '44-2', chapter: 44, q: 'How do you create a multi-line comment in JavaScript?', choices: ['// on each line', '/* ... */', '<!-- ... -->', '## ... ##'], answer: 1, hint: 'Similar to CSS comments.', explain: 'Multi-line comments use /* to open and */ to close.' },
+            { id: '44-1', chapter: 44, q: 'Which of the following is a single-line comment in JavaScript?', choices: ['/* comment */', '<!-- comment -->', '// comment', `# comment`], answer: 2, hint: 'Two forward slashes.', explain: 'Single-line comments use //; block comments use /* ... */.' },
+            { id: '44-2', chapter: 44, q: 'How do you create a multi-line comment in JavaScript?', choices: ['// on each line', '/* ... */', `<!- - ... -->`, '## ... ##'], answer: 1, hint: 'Similar to CSS comments.', explain: 'Multi-line comments use /* to open and */ to close.' },
             { id: '44-3', chapter: 44, q: 'Can you put code and a comment on the same line?', choices: ['No, never', 'Yes, with // after the code', 'Only with /* */', 'Only in functions'], answer: 1, hint: 'Single-line comments work inline.', explain: 'You can write: var x = 5; // This sets x to 5' },
             { id: '44-4', chapter: 44, q: 'Why might you use comments to "comment out" code?', choices: ['To make it permanent', 'For testing and debugging', 'To make it run faster', 'To save memory'], answer: 1, hint: 'Temporarily disable code.', explain: 'Commenting out code lets you test without deleting it, useful for debugging.' },
             { id: '44-5', chapter: 44, q: 'What happens to commented code when JavaScript runs?', choices: ['It runs slowly', 'It is completely ignored', 'It runs in the background', 'It throws an error'], answer: 1, hint: 'The browser skips it.', explain: 'The JavaScript engine ignores all commented text—it is for humans only.' },
@@ -467,7 +468,7 @@
 
             { id: '46-1', chapter: 46, q: 'Which event is commonly used to respond to a button press?', choices: ['onscroll', 'onclick', 'oninput', 'onhover'], answer: 1, hint: 'Same as links for clicks.', explain: 'Buttons respond to click events; use addEventListener("click", fn).' },
 
-            { id: '46-2', chapter: 46, q: 'What HTML creates a clickable button?', choices: ['<button>Click</button>', '<input type="button">', 'Both A and B', '<click>'], answer: 2, hint: 'Two ways exist.', explain: 'Both <button> and <input type="button"> create clickable buttons.' },
+            { id: '46-2', chapter: 46, q: 'What HTML creates a clickable button?', choices: [`<button>Click</button>`, `<input type="button">`, 'Both A and B', `<click>Click</click>`], answer: 2, hint: 'Two ways exist.', explain: 'Both <button> and <input type="button"> create clickable buttons.' },
 
             { id: '46-3', chapter: 46, q: 'How do you specify the text on an input type="button"?', choices: ['innerHTML', 'text attribute', 'value attribute', 'label attribute'], answer: 2, hint: 'It is a form input property.', explain: 'Use value="Button Text" to set the button label.' },
 
@@ -571,7 +572,7 @@
 
             { id: '51-6', chapter: 51, q: 'What happens if you set innerHTML with HTML tags?', choices: ['Tags display as text', 'Tags are rendered as HTML', 'Error occurs', 'Tags are removed'], answer: 1, hint: 'Browser interprets markup.', explain: 'The browser parses and renders the HTML tags properly.' },
 
-            { id: '51-7', chapter: 51, q: 'Can you insert a list using innerHTML?', choices: ['No, only text', 'Yes, with <ol> or <ul> tags', 'Only unordered lists', 'Only in divs'], answer: 1, hint: 'Any HTML elements work.', explain: 'You can insert complete lists with <ol><li>...</li></ol> using innerHTML.' },
+            { id: '51-7', chapter: 51, q: 'Can you insert a list using innerHTML?', choices: ['No, only text', `Yes, with <ol> or <ul> tags`, 'Only unordered lists', 'Only in divs'], answer: 1, hint: 'Any HTML elements work.', explain: 'You can insert complete lists with <ol><li>...</li></ol> using innerHTML.' },
 
             { id: '51-8', chapter: 51, q: 'What is the difference between innerHTML and innerText?', choices: ['No difference', 'innerHTML includes HTML, innerText is plain text only', 'innerText is faster', 'innerHTML is deprecated'], answer: 1, hint: 'HTML vs plain text.', explain: 'innerHTML returns/sets HTML markup; innerText returns/sets only visible text.' },
 
